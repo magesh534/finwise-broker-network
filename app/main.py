@@ -37,3 +37,7 @@ def startup_event():
     db = next(get_db())
     ensure_admin(db)
     print("✅ Admin user ensured at startup.")
+
+@app.get("/")
+def root():
+    return {"message": "Welcome to FinWise Broker Network API"}
