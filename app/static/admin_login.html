@@ -5,7 +5,7 @@
   <title>FinWise Admin Login</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: "Segoe UI", Arial, sans-serif;
       background: linear-gradient(to bottom right, #e6ecff, #ffffff);
       height: 100vh;
       display: flex;
@@ -54,19 +54,14 @@
       background-color: #083dcc;
     }
 
-    .error {
-      color: red;
+    .error, .success {
       font-size: 13px;
       margin-top: 10px;
       height: 16px;
     }
 
-    .success {
-      color: green;
-      font-size: 13px;
-      margin-top: 10px;
-      height: 16px;
-    }
+    .error { color: red; }
+    .success { color: green; }
 
     .footer {
       font-size: 12px;
@@ -74,12 +69,38 @@
       margin-top: 15px;
     }
 
+    nav {
+      position: absolute;
+      top: 0;
+      width: 100%;
+      background: #0a4fff;
+      padding: 10px;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    nav a {
+      color: white;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    nav a:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
 
+  <nav>
+    <a href="index.html">🏠 Home</a>
+    <a href="broker_register.html">🧾 Register Broker</a>
+    <a href="admin_login.html">🔑 Admin Login</a>
+  </nav>
+
   <div class="login-container">
-    <h1>FinWise Admin Login</h1>
+    <h1>Admin Login</h1>
 
     <input id="email" type="email" placeholder="Enter email" value="admin@finwise.local" />
     <input id="password" type="password" placeholder="Enter password" value="admin123" />
@@ -91,24 +112,27 @@
   </div>
 
   <script>
-    const API_URL = "http://127.0.0.1:8000";
+    // ✅ Use your live Render backend URL
+    const API_URL = "https://finwise-broker-network.onrender.com";
+
 
     async function login() {
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value.trim();
       const msg = document.getElementById("msg");
       msg.textContent = "";
+      msg.className = "error";
 
       if (!email || !password) {
         msg.textContent = "⚠️ Please fill in both fields.";
         return;
       }
 
-      const formData = new FormData();
-      formData.append("email", email);
-      formData.append("password", password);
-
       try {
+        const formData = new FormData();
+        formData.append("email", email);
+        formData.append("password", password);
+
         const resp = await fetch(`${API_URL}/admin-auth/login`, {
           method: "POST",
           body: formData,
@@ -121,7 +145,7 @@
           return;
         }
 
-        // Save token in localStorage
+        // ✅ Save token in localStorage for dashboard access
         localStorage.setItem("admin_token", data.access_token);
         msg.className = "success";
         msg.textContent = "✅ Login successful! Redirecting...";
@@ -133,7 +157,7 @@
 
       } catch (err) {
         console.error("Login error:", err);
-        msg.textContent = "⚠️ Server not reachable. Make sure FastAPI is running.";
+        msg.textContent = "⚠️ Server not reachable. Please try again later.";
       }
     }
   </script>

@@ -18,9 +18,29 @@
       text-align: center;
     }
 
-    h1 {
+    header h1 {
       margin: 0;
-      font-size: 24px;
+      font-size: 26px;
+    }
+
+    nav {
+      background: #e8f0fe;
+      display: flex;
+      justify-content: center;
+      gap: 25px;
+      padding: 10px;
+      border-bottom: 1px solid #d0d7de;
+    }
+
+    nav a {
+      color: #0a4fff;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 15px;
+    }
+
+    nav a:hover {
+      text-decoration: underline;
     }
 
     main {
@@ -43,6 +63,7 @@
       padding: 10px;
       border: 1px solid #ccc;
       border-radius: 5px;
+      font-size: 14px;
     }
 
     button {
@@ -114,6 +135,12 @@
     <p>Find verified, trusted brokers instantly</p>
   </header>
 
+  <nav>
+    <a href="index.html">🏠 Home</a>
+    <a href="broker_register.html">🧾 Register Broker</a>
+    <a href="admin_login.html">🔑 Admin Login</a>
+  </nav>
+
   <main>
     <div class="search-bar">
       <input id="query" placeholder="Search by name, firm, license, or specialization..." />
@@ -125,7 +152,10 @@
   </main>
 
   <script>
-    const API_URL = "http://127.0.0.1:8000";
+    // ✅ Use your Render backend URL here
+    const API_URL = "https://finwise-broker-network.onrender.com";
+
+
 
     async function searchBrokers() {
       const q = document.getElementById("query").value.trim().toLowerCase();
@@ -136,7 +166,7 @@
       empty.textContent = "";
 
       try {
-        const resp = await fetch(`${API_URL}/brokers?status=verified`);
+        const resp = await fetch(`${API_URL}/brokers/?status=verified`);
         if (!resp.ok) throw new Error("Failed to fetch brokers");
 
         const data = await resp.json();
@@ -173,7 +203,7 @@
       } catch (err) {
         console.error("Error fetching brokers:", err);
         list.innerHTML = "";
-        empty.textContent = "⚠️ Unable to load broker data. Make sure backend is running.";
+        empty.textContent = "⚠️ Unable to load broker data. Please ensure backend is live.";
       }
     }
 
