@@ -38,6 +38,7 @@ def startup_event():
     ensure_admin(db)
     print("✅ Admin user ensured at startup.")
 
+# ✅ Step 6: Health check endpoint for Render
 @app.get("/")
 def root():
     return {"message": "Welcome to FinWise Broker Network API"}
