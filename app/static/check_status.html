@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Check Broker Status | FinWise</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: #f9fafb;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .box {
+      background: white;
+      padding: 35px;
+      border-radius: 10px;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+      width: 400px;
+      text-align: center;
+    }
+
+    h1 {
+      color: #0a4fff;
+      margin-bottom: 15px;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      margin-bottom: 15px;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      background: #0a4fff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #083dcc;
+    }
+
+    .status {
+      margin-top: 15px;
+      font-weight: 600;
+      font-size: 16px;
+    }
+
+    .verified {
+      color: green;
+    }
+
+    .pending {
+      color: orange;
+    }
+
+    .rejected {
+      color: red;
+    }
+
+    a {
+      display: inline-block;
+      margin-top: 20px;
+      color: #0a4fff;
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="box">
+    <h1>Check Broker Status</h1>
+    <input type="text" id="license_number" placeholder="Enter your License Number" required />
+    <button onclick="checkStatus()">Check Status</button>
+    <p id="result" class="status"></p>
+
+    <a href="broker_register.html">← Back to Registration</a>
+  </div>
+
+  <script>
+    const API_URL = "http://127.0.0.1:8000";
+
+    async function checkStatus() {
+      const license = document.getElementById("license_number").value.trim();
+      const result = document.getElementById("result");
+
+      if (!license) {
+        result.textContent = "⚠️ Please enter your license number.";
+        result.className = "status";
+        return;
+      }
+
+      result.textContent = "🔍 Checking...";
+      result.className = "status";
+
+      try {
+        const resp = await fetch(`${API_URL}/brokers/`);
+        const brokers = await resp.json();
+
+        const match = brokers.find(b => b.license_number.toLowerCase() === license.toLowerCase());
+
+        if (!match) {
+          result.textContent = "❌ Broker not found. Please check your license number.";
+          result.className = "status rejected";
+          return;
+        }
+
+        if (match.status === "verified") {
+          result.textContent = "✅ Your account is VERIFIED.";
+          result.className = "status verified";
+        } else if (match.status === "pending") {
+          result.textContent = "🕓 Your registration is still PENDING verification.";
+          result.className = "status pending";
+        } else {
+          result.textContent = "❌ Your registration has been REJECTED.";
+          result.className = "status rejected";
+        }
+
+      } catch (err) {
+        console.error(err);
+        result.textContent = "⚠️ Could not connect to the server. Please try again later.";
+        result.className = "status";
+      }
+    }
+  </script>
+</body>
+</html>

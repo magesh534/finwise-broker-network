@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>FinWise – Find Verified Brokers</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: #f9fafb;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      background: #0a4fff;
+      color: white;
+      padding: 15px 25px;
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    main {
+      max-width: 900px;
+      margin: 30px auto;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+      padding: 25px;
+    }
+
+    .search-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    input {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    button {
+      background: #0a4fff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 10px 15px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    button:hover {
+      background: #083dcc;
+    }
+
+    .broker-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 15px;
+      background: #f8fafc;
+      transition: transform 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .card h3 {
+      margin: 0 0 5px;
+      color: #0a4fff;
+    }
+
+    .card small {
+      color: #666;
+    }
+
+    .contact-links a {
+      display: inline-block;
+      margin-right: 10px;
+      color: #0a4fff;
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    .contact-links a:hover {
+      text-decoration: underline;
+    }
+
+    .empty-state {
+      text-align: center;
+      color: #777;
+      font-size: 15px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>FinWise Broker Network</h1>
+    <p>Find verified, trusted brokers instantly</p>
+  </header>
+
+  <main>
+    <div class="search-bar">
+      <input id="query" placeholder="Search by name, firm, license, or specialization..." />
+      <button onclick="searchBrokers()">Search</button>
+    </div>
+
+    <div id="broker-list" class="broker-list"></div>
+    <p id="empty" class="empty-state"></p>
+  </main>
+
+  <script>
+    const API_URL = "http://127.0.0.1:8000";
+
+    async function searchBrokers() {
+      const q = document.getElementById("query").value.trim().toLowerCase();
+      const list = document.getElementById("broker-list");
+      const empty = document.getElementById("empty");
+
+      list.innerHTML = "<p>Loading brokers...</p>";
+      empty.textContent = "";
+
+      try {
+        const resp = await fetch(`${API_URL}/brokers?status=verified`);
+        if (!resp.ok) throw new Error("Failed to fetch brokers");
+
+        const data = await resp.json();
+        const filtered = data.filter(b =>
+          b.name.toLowerCase().includes(q) ||
+          b.firm_name.toLowerCase().includes(q) ||
+          b.license_number.toLowerCase().includes(q) ||
+          (b.specialization || "").toLowerCase().includes(q)
+        );
+
+        list.innerHTML = "";
+        if (filtered.length === 0) {
+          empty.textContent = "⚠️ No matching brokers found.";
+          return;
+        }
+
+        filtered.forEach(broker => {
+          const div = document.createElement("div");
+          div.className = "card";
+          div.innerHTML = `
+            <h3>${broker.name}</h3>
+            <small><b>${broker.firm_name}</b> — ${broker.specialization || "General Broker"}</small><br>
+            <p>📍 ${broker.address}</p>
+            <p>🔖 License: ${broker.license_number}</p>
+            <p><b>Status:</b> ${broker.status}</p>
+            <div class="contact-links">
+              <a href="mailto:${broker.email}">📧 Email</a>
+              <a href="tel:${broker.phone}">📞 Call</a>
+              <a href="https://wa.me/${broker.phone}" target="_blank">💬 WhatsApp</a>
+            </div>
+          `;
+          list.appendChild(div);
+        });
+      } catch (err) {
+        console.error("Error fetching brokers:", err);
+        list.innerHTML = "";
+        empty.textContent = "⚠️ Unable to load broker data. Make sure backend is running.";
+      }
+    }
+
+    // Load verified brokers by default
+    searchBrokers();
+  </script>
+</body>
+</html>

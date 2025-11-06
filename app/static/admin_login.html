@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>FinWise Admin Login</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to bottom right, #e6ecff, #ffffff);
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 0;
+    }
+
+    .login-container {
+      background: white;
+      padding: 40px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      width: 320px;
+      text-align: center;
+    }
+
+    h1 {
+      color: #0a4fff;
+      font-size: 22px;
+      margin-bottom: 20px;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+
+    button {
+      width: 100%;
+      background-color: #0a4fff;
+      color: white;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      font-size: 15px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    button:hover {
+      background-color: #083dcc;
+    }
+
+    .error {
+      color: red;
+      font-size: 13px;
+      margin-top: 10px;
+      height: 16px;
+    }
+
+    .success {
+      color: green;
+      font-size: 13px;
+      margin-top: 10px;
+      height: 16px;
+    }
+
+    .footer {
+      font-size: 12px;
+      color: #666;
+      margin-top: 15px;
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="login-container">
+    <h1>FinWise Admin Login</h1>
+
+    <input id="email" type="email" placeholder="Enter email" value="admin@finwise.local" />
+    <input id="password" type="password" placeholder="Enter password" value="admin123" />
+
+    <button onclick="login()">Login</button>
+    <p id="msg" class="error"></p>
+
+    <div class="footer">© 2025 FinWise Platform</div>
+  </div>
+
+  <script>
+    const API_URL = "http://127.0.0.1:8000";
+
+    async function login() {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const msg = document.getElementById("msg");
+      msg.textContent = "";
+
+      if (!email || !password) {
+        msg.textContent = "⚠️ Please fill in both fields.";
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("email", email);
+      formData.append("password", password);
+
+      try {
+        const resp = await fetch(`${API_URL}/admin-auth/login`, {
+          method: "POST",
+          body: formData,
+        });
+
+        const data = await resp.json();
+
+        if (!resp.ok) {
+          msg.textContent = data.detail || "❌ Invalid credentials.";
+          return;
+        }
+
+        // Save token in localStorage
+        localStorage.setItem("admin_token", data.access_token);
+        msg.className = "success";
+        msg.textContent = "✅ Login successful! Redirecting...";
+
+        // Redirect to admin dashboard
+        setTimeout(() => {
+          window.location.href = "admin.html";
+        }, 1000);
+
+      } catch (err) {
+        console.error("Login error:", err);
+        msg.textContent = "⚠️ Server not reachable. Make sure FastAPI is running.";
+      }
+    }
+  </script>
+
+</body>
+</html>

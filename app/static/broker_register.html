@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>FinWise Broker Registration</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: #f9fafb;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 40px 0;
+      margin: 0;
+    }
+
+    form {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      width: 420px;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      text-align: center;
+      color: #0a4fff;
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      background: #0a4fff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    button:hover {
+      background: #083dcc;
+    }
+
+    .message {
+      text-align: center;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+    .success {
+      color: green;
+    }
+
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+
+  <form id="registerForm">
+    <h1>Broker Registration</h1>
+
+    <label for="name">Full Name *</label>
+    <input type="text" id="name" required>
+
+    <label for="firm_name">Firm Name *</label>
+    <input type="text" id="firm_name" required>
+
+    <label for="phone">Phone Number *</label>
+    <input type="text" id="phone" required>
+
+    <label for="email">Email *</label>
+    <input type="email" id="email" required>
+
+    <label for="address">Address *</label>
+    <textarea id="address" rows="2" required></textarea>
+
+    <label for="license_number">License Number *</label>
+    <input type="text" id="license_number" required>
+
+    <label for="regulator">Regulator (e.g., SEBI)</label>
+    <input type="text" id="regulator">
+
+    <label for="specialization">Specialization</label>
+    <input type="text" id="specialization" placeholder="e.g., Stock Broker, Mutual Funds">
+
+    <label for="pan">Upload PAN Card</label>
+    <input type="file" id="pan" accept=".pdf,.jpg,.png">
+
+    <label for="aadhaar">Upload Aadhaar</label>
+    <input type="file" id="aadhaar" accept=".pdf,.jpg,.png">
+
+    <button type="submit">Register</button>
+
+    <p id="msg" class="message"></p>
+  </form>
+
+  <script>
+    const API_URL = "http://127.0.0.1:8000";
+
+    document.getElementById("registerForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const msg = document.getElementById("msg");
+      msg.textContent = "";
+      msg.className = "message";
+
+      const formData = new FormData();
+      formData.append("name", document.getElementById("name").value.trim());
+      formData.append("firm_name", document.getElementById("firm_name").value.trim());
+      formData.append("phone", document.getElementById("phone").value.trim());
+      formData.append("email", document.getElementById("email").value.trim());
+      formData.append("address", document.getElementById("address").value.trim());
+      formData.append("license_number", document.getElementById("license_number").value.trim());
+      formData.append("regulator", document.getElementById("regulator").value.trim());
+      formData.append("specialization", document.getElementById("specialization").value.trim());
+
+      const panFile = document.getElementById("pan").files[0];
+      const aadhaarFile = document.getElementById("aadhaar").files[0];
+      if (panFile) formData.append("pan", panFile);
+      if (aadhaarFile) formData.append("aadhaar", aadhaarFile);
+
+      try {
+        const response = await fetch(`${API_URL}/brokers/`, {
+          method: "POST",
+          body: formData,
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          msg.className = "message error";
+          msg.textContent = `❌ Registration failed: ${data.detail || "Please check inputs."}`;
+          return;
+        }
+
+        msg.className = "message success";
+        msg.textContent = "✅ Registration successful! Redirecting...";
+
+        // Reliable redirect after success
+        setTimeout(() => {
+          window.location.assign("broker_success.html");
+        }, 1500);
+
+      } catch (error) {
+        console.error(error);
+        msg.className = "message error";
+        msg.textContent = "⚠️ Unable to connect to server. Please try again later.";
+      }
+    });
+  </script>
+</body>
+</html>

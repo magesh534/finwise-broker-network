@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>FinWise Admin Dashboard</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: #f5f7fa;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      background: #0a4fff;
+      color: white;
+      padding: 15px 25px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+    }
+
+    button.logout {
+      background: #ef4444;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 14px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    button.logout:hover {
+      background: #b91c1c;
+    }
+
+    main {
+      padding: 20px;
+    }
+
+    .tab-buttons {
+      margin-bottom: 20px;
+    }
+
+    .tab-buttons button {
+      background: #e0e7ff;
+      color: #0a4fff;
+      border: none;
+      padding: 8px 15px;
+      margin-right: 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .tab-buttons button.active {
+      background: #0a4fff;
+      color: white;
+    }
+
+    .tab-buttons button:hover {
+      background: #2563eb;
+      color: white;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    th, td {
+      padding: 10px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+
+    th {
+      background: #f1f5f9;
+    }
+
+    td button {
+      padding: 6px 10px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      color: white;
+      transition: opacity 0.2s;
+    }
+
+    td button.approve {
+      background: #16a34a;
+    }
+
+    td button.reject {
+      background: #dc2626;
+    }
+
+    td button:hover {
+      opacity: 0.85;
+    }
+
+    .status {
+      font-weight: bold;
+      text-transform: capitalize;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>FinWise Admin Dashboard</h1>
+    <button class="logout" onclick="logout()">Logout</button>
+  </header>
+
+  <main>
+    <div class="tab-buttons">
+      <button id="tab-pending" class="active" onclick="switchTab('pending')">Pending Brokers</button>
+      <button id="tab-verified" onclick="switchTab('verified')">Verified Brokers</button>
+    </div>
+
+    <table id="brokers-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Firm</th>
+          <th>License</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td colspan="6">Loading...</td></tr>
+      </tbody>
+    </table>
+  </main>
+
+  <script>
+    const API_URL = "http://127.0.0.1:8000";
+    const token = localStorage.getItem("admin_token");
+    let currentTab = "pending";
+
+    // ✅ Redirect to login if no token
+    if (!token) {
+      alert("Unauthorized! Please log in first.");
+      window.location.href = "admin_login.html";
+    }
+
+    // ✅ Verify token before loading data
+    async function verifyAdminToken() {
+      try {
+        const resp = await fetch(`${API_URL}/admin-auth/verify-token?token=${token}`);
+        if (!resp.ok) throw new Error("Invalid token");
+        const data = await resp.json();
+        if (!data.valid) throw new Error("Invalid or expired token");
+        console.log("✅ Admin verified");
+      } catch (err) {
+        alert("⚠️ Session expired. Please log in again.");
+        localStorage.removeItem("admin_token");
+        window.location.href = "admin_login.html";
+      }
+    }
+
+    // ✅ Switch between Pending and Verified tabs
+    function switchTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll(".tab-buttons button").forEach(btn => btn.classList.remove("active"));
+      document.getElementById(`tab-${tab}`).classList.add("active");
+      loadBrokers();
+    }
+
+    // ✅ Fetch brokers (pending or verified)
+    async function loadBrokers() {
+      const tbody = document.querySelector("#brokers-table tbody");
+      tbody.innerHTML = "<tr><td colspan='6'>Loading...</td></tr>";
+
+      try {
+        const url = currentTab === "pending"
+          ? `${API_URL}/admin/pending`
+          : `${API_URL}/brokers?status=verified`;
+
+        const resp = await fetch(url, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+
+        if (!resp.ok) throw new Error("Server error or unauthorized");
+
+        const data = await resp.json();
+        if (data.length === 0) {
+          tbody.innerHTML = `<tr><td colspan='6'>No ${currentTab} brokers found.</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = "";
+        data.forEach(broker => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${broker.id}</td>
+            <td>${broker.name}</td>
+            <td>${broker.firm_name}</td>
+            <td>${broker.license_number}</td>
+            <td class="status">${broker.status}</td>
+            <td>
+              ${currentTab === "pending"
+                ? `
+                  <button class="approve" onclick="verifyBroker(${broker.id}, true)">Approve</button>
+                  <button class="reject" onclick="verifyBroker(${broker.id}, false)">Reject</button>
+                `
+                : `<em>No actions</em>`
+              }
+            </td>
+          `;
+          tbody.appendChild(row);
+        });
+      } catch (err) {
+        console.error("Error loading brokers:", err);
+        tbody.innerHTML = `<tr><td colspan='6' style='color:red;'>Error fetching brokers.</td></tr>`;
+      }
+    }
+
+    // ✅ Verify broker (approve/reject)
+    async function verifyBroker(id, approve) {
+      try {
+        const resp = await fetch(`${API_URL}/admin/verify/${id}?approve=${approve}`, {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (resp.ok) {
+          alert(`Broker ${approve ? "approved ✅" : "rejected ❌"}`);
+          loadBrokers();
+        } else {
+          alert("❌ Failed to update broker status.");
+        }
+      } catch (err) {
+        console.error("Error verifying broker:", err);
+        alert("⚠️ Server error. Try again.");
+      }
+    }
+
+    // ✅ Logout admin
+    function logout() {
+      localStorage.removeItem("admin_token");
+      window.location.href = "admin_login.html";
+    }
+
+    // ✅ Verify token & load data on startup
+    verifyAdminToken().then(loadBrokers);
+  </script>
+
+</body>
+</html>
